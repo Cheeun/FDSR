@@ -1,4 +1,4 @@
-# FDSR2
+# FDSR
 
 
 This code rebuilds the searched architecture from FGNAS based on EDSR original code.
