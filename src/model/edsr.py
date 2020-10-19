@@ -1,9 +1,10 @@
-#### EDSR.FINAL############
-from model import common
+
 import math
 from option import args
 import torch
 import torch.nn as nn
+from model import common
+import numpy as np
 
 url = {
     'r16f64x2': 'https://cv.snu.ac.kr/research/EDSR/models/edsr_baseline_x2-1bc95232.pt',
@@ -17,6 +18,14 @@ url = {
 
 def make_model(args, parent=False):
     return EDSR(args)
+
+
+def reshape(a,b):
+    return a[np.nonzero(b)].squeeze()
+def prune(a, index):
+    # a (1,4,2,2)
+    # b (4)
+    return a[:,np.nonzero(index).squeeze(1),:,:]
 
 class EDSR(nn.Module):
     def __init__(self, args, conv=common.default_conv):
@@ -42,87 +51,54 @@ class EDSR(nn.Module):
         pt=args.PT
         rt=args.RT
         prt=args.PRT
-        op3_gate = args.op3
-        skip_gate = args.skip
-
-        
-
-        
-        
+        self.op1 = args.op1
+        self.op2 = args.op2 
+        self.op_last = args.op_last
 
         self.head = conv(args.n_colors, n_feats, kernel_size)
-        self.op1 = args.op1
-        self.op1_gate = len(args.op1)
-        
+
+ 
+        skip_init =  args.op1.unsqueeze(0)
+        skip_gate = torch.cat((skip_init, args.skip.squeeze()), dim=0)
+        resconv2_init =  args.op1.unsqueeze(0)
+        resconv2_gate= torch.cat((resconv2_init, args.resconv2),dim=0)
+        resconv3_init =  args.op1.unsqueeze(0)
+        resconv3_gate = torch.cat((resconv3_init, args.resconv3),dim=0)
+ 
+        in_gate = skip_gate + resconv3_gate - resconv3_gate*skip_gate.detach()
+        input_gate = torch.cat([torch.ones(1,args.n_feats).cuda(), in_gate],dim=0)
+
         m_body = [
             common.ResBlock(
-                conv, n_feats, kernel_size, p[i],r[i], t[i],pr[i],pt[i],rt[i],prt[i],op3_gate[i],skip_gate[i], res_scale=args.res_scale
+                conv, n_feats, kernel_size,i,input_gate[i],args.op1, args.op2,p[i],r[i],t[i],pr[i],pt[i],rt[i],prt[i],skip_gate[i],resconv3_gate[i],skip_gate[i+1],resconv3_gate[i+1],resconv2_gate[i+1], res_scale=args.res_scale
             ) for i in range(n_resblocks)
         ]
-        
         self.body = nn.Sequential(*m_body)
-        self.body2 = conv(len(args.op2), n_feats, kernel_size)
-        # self.body2 = conv(n_feats, n_feats, kernel_size)
-
-        self.op2 = args.op2
-        # self.body2_pruned = conv(n_feats, self.op2.size(1), kernel_size) # input_ch n_feats doesn't change
-        # self.body2_pruned = conv(self.op1.size(1), self.op2.size(1), kernel_size) 
+        self.body2 = conv(n_feats, int(args.op2.sum()), kernel_size)
         
-        self.op_last = args.op_last
-        self.tail1 = conv(len(args.op_last), args.n_colors*(4**int(math.log(scale, 2))), kernel_size)
-        # self.tail1 = conv(n_feats, args.n_colors*(4**int(math.log(scale, 2))), kernel_size)
-
-
+        self.tail1 = conv( int(args.op2.sum()), int(args.op_last.sum()), kernel_size)
         tail2 = [nn.PixelShuffle(2) for i in range(int(math.log(scale, 2)))] # only covers scale 2, 4
         self.tail2 = nn.Sequential(*tail2)
 
-        ################ Second EDSR
-        self.downshuffle = nn.PixelShuffle(0.5)
 
     def forward(self, x):
         x = x.cuda()
         x = self.sub_mean(x)
-
-        x1 = self.head(x)
-
-        res = self.body(x1)
-        # print(res.shape)
-        res_=torch.zeros(res.size(0),len(self.op2),res.size(2),res.size(3))
-        # print(res_.shape)
-        for i in range(len(self.op2)):
-            res_[:,i,:,:]=res[:,self.op2[i],:,:]
-        res_=res_.cuda()
-        res2 = self.body2(res_)
-        # res2 = self.body2(res)
-
-        res2 += x1
-
-        res2_=torch.zeros(res2.size(0),len(self.op_last),res2.size(2),res2.size(3))
-        for i in range(len(self.op_last)):
-            res2_[:,i,:,:]=res2[:,self.op_last[i],:,:] 
-        res2_=res2_.cuda()
-        x = self.tail1(res2_)
-        # x = self.tail1(res2)
-
-
-        x=self.tail2(x)
-
-        x=self.add_mean(x)
-
-        '''
-        x= self.downshuffle(x)
-        x = self.sub_mean(x)
         x1 = self.head(x) 
+
+        x1 = (x1.clone().permute(0,2,3,1)*self.op1).permute(0,3,1,2)
+        
         res = self.body(x1)
-        res2 = self.body2(res)
-        res2 += x1
-        x = self.tail1(res2)
-        x = self.tail2(x)
-        x = self.add_mean(x)
-        '''
+        res2 =self.body2(res) 
+        x1_ = x1[:,self.op2.nonzero().squeeze(1),:,:] 
+        res2 += x1_
+        out = self.tail1(res2)
+
+        out=self.tail2(out)
+        out=self.add_mean(out)
 
     
-        return x
+        return out
 
 
     def load_state_dict(self, state_dict, strict=True):
@@ -147,6 +123,3 @@ class EDSR(nn.Module):
 
 
 
-    
-
-    

@@ -1,5 +1,5 @@
 import argparse
-import template
+#import template
 import torch
 import numpy
 
@@ -70,20 +70,6 @@ parser.add_argument('--precision', type=str, default='single',
                     choices=('single', 'half'),
                     help='FP precision for test (single | half)')
 
-# Option for Residual dense network (RDN)
-parser.add_argument('--G0', type=int, default=64,
-                    help='default number of filters. (Use in RDN)')
-parser.add_argument('--RDNkSize', type=int, default=3,
-                    help='default kernel size. (Use in RDN)')
-parser.add_argument('--RDNconfig', type=str, default='B',
-                    help='parameters config of RDN. (Use in RDN)')
-
-# Option for Residual channel attention network (RCAN)
-parser.add_argument('--n_resgroups', type=int, default=10,
-                    help='number of residual groups')
-parser.add_argument('--reduction', type=int, default=16,
-                    help='number of feature maps reduction')
-
 # Training specifications
 parser.add_argument('--reset', action='store_true',
                     help='reset the training')
@@ -99,8 +85,6 @@ parser.add_argument('--self_ensemble', action='store_true',
                     help='use self-ensemble method for test')
 parser.add_argument('--test_only', action='store_true',
                     help='set this option to test the model')
-parser.add_argument('--gan_k', type=int, default=1,
-                    help='k value for adversarial loss')
 
 # Optimization specifications
 parser.add_argument('--lr', type=float, default=1e-4,
@@ -144,10 +128,10 @@ parser.add_argument('--save_results', action='store_true',
                     help='save output results')
 parser.add_argument('--save_gt', action='store_true',
                     help='save low-resolution and high-resolution images together')
-parser.add_argument('--import_dir', type=str, default='test',
+parser.add_argument('--searched_model', type=str, default='FDSR_full_x4_50G',
                     help='file dir to import from')
 args = parser.parse_args()
-template.set_template(args)
+#template.set_template(args)
 
 args.scale = list(map(lambda x: int(x), args.scale.split('+')))
 args.data_train = args.data_train.split('+')
@@ -164,26 +148,22 @@ for arg in vars(args):
 
 
 
-# comment for original EDSR
-NETWORK_DIR = 'NAS_exports/'+args.import_dir
-# NETWORK_DIR = 'NAS_exports/reproduce_x4_8_searched_fixed_enhance_psnr'
+NETWORK_DIR = 'NAS_exports/'+args.searched_model
 
 ##################### Exported Architecture ##########################
-# = torch.tensor([index of activated operation])
-args.op1 = torch.load(NETWORK_DIR+'/NoAct1.pt') 
-args.op2 = torch.load(NETWORK_DIR+'/NoAct2.pt')
+args.op1     = torch.load(NETWORK_DIR+'/NoAct1.pt')
+args.op2     = torch.load(NETWORK_DIR+'/NoAct2.pt')
 args.op_last = torch.load(NETWORK_DIR+'/NoAct3.pt')
-args.skip = torch.load(NETWORK_DIR+'/skip.pt')
-args.skip_num=0
-for i in range(args.n_resblocks): 
-    args.skip_num+=args.skip[i].sum()
-args.P  = numpy.load(NETWORK_DIR+'/p.npy' ,allow_pickle=True)
-args.R  = numpy.load(NETWORK_DIR+'/r.npy' ,allow_pickle=True)
-args.T  = numpy.load(NETWORK_DIR+'/t.npy' ,allow_pickle=True)
-args.PR = numpy.load(NETWORK_DIR+'/pr.npy',allow_pickle=True)
-args.PT = numpy.load(NETWORK_DIR+'/pt.npy',allow_pickle=True)
-args.RT = numpy.load(NETWORK_DIR+'/rt.npy',allow_pickle=True)
+
+args.P  = numpy.load(NETWORK_DIR+'/p.npy'  , allow_pickle=True)
+args.R  = numpy.load(NETWORK_DIR+'/r.npy'  , allow_pickle=True)
+args.T  = numpy.load(NETWORK_DIR+'/t.npy'  , allow_pickle=True)
+args.PR = numpy.load(NETWORK_DIR+'/pr.npy' , allow_pickle=True)
+args.PT = numpy.load(NETWORK_DIR+'/pt.npy' , allow_pickle=True)
+args.RT = numpy.load(NETWORK_DIR+'/rt.npy' , allow_pickle=True)
 args.PRT= numpy.load(NETWORK_DIR+'/prt.npy', allow_pickle=True)
-args.op3= numpy.load(NETWORK_DIR+'/conv3.npy',allow_pickle=True)
+#args.NOP= numpy.load(NETWORK_DIR+'/nop.npy', allow_pickle=True)
 
-
+args.skip = torch.load(NETWORK_DIR+'/skip.pt')
+args.resconv2 = torch.load(NETWORK_DIR+'/resconv2.pt')
+args.resconv3 = torch.load(NETWORK_DIR+'/resconv3.pt')
