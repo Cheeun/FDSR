@@ -50,7 +50,7 @@ class Trainer():
             sr = self.model(lr, 0)
             loss = self.loss(sr, hr)
 
-            loss.backward()
+            loss.backward(retain_graph=True)
             if self.args.gclip > 0:
                 utils.clip_grad_value_(
                     self.model.parameters(),

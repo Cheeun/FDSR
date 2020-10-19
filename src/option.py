@@ -148,7 +148,7 @@ for arg in vars(args):
 
 
 
-NETWORK_DIR = 'NAS_exports/'+args.searched_model
+NETWORK_DIR = 'network_architectures/'+args.searched_model
 
 ##################### Exported Architecture ##########################
 args.op1     = torch.load(NETWORK_DIR+'/NoAct1.pt')
