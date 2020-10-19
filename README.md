@@ -42,4 +42,4 @@ the searched architecture here is searched on small EDSR with scale 4, and in sm
 cd src       # You are now in */FDSR/src
 sh test_x4.sh
 ```
-Results and Figures in /experiment/searched_small_edsr_x4
+Results and Figures in /experiment/searched_small_edsr_x4	
