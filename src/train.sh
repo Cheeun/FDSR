@@ -5,6 +5,6 @@ CUDA_VISIBLE_DEVICES=7 python main.py \
 --batch_size 8 --patch_size 192 \
 --n_threads 1 --n_GPUs 1 \
 --save fdsr_train \
---searched_model fdsr_full_x4_50G \
+--searched_model fdsr_full_x4_3% \
 --n_feats 256 --n_resblocks 32 --res_scale 0.1 \
 #--dir_data ~/workspace/datasets/ \

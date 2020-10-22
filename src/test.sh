@@ -5,7 +5,6 @@ CUDA_VISIBLE_DEVICES=7 python main.py \
 --batch_size 8 --patch_size 192 \
 --n_threads 1 --n_GPUs 1 \
 --save fdsr_test \
---searched_model fdsr_full_x4_50G \
 --n_feats 256 --n_resblocks 32 --res_scale 0.1 \
 --test_only \
 --pre_train PRETRAINED_DIRECTORY \
