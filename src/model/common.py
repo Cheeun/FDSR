@@ -83,13 +83,13 @@ class act_PRT(nn.Module):
         out = (self.relu(x)+self.prelu(x)+self.tanh(x))/3
         return out
         
-class Zero():
+class Zero(nn.Module):
     def __init__(self):
         super(Zero, self).__init__()
     def forward(self,x):
         return torch.tensor([])
         
-class Identity():
+class Identity(nn.Module):
     def __init__(self):
         super(Identity, self).__init__()
     def forward(self,x):
@@ -149,8 +149,11 @@ class ActivatedOp(nn.Module):
         elif op_type == 'conv_tot':
             self.gate = conv_only+skip_conv
             self.skip_gate = skip_conv
-            self.conv3= nn.Conv2d(int(sum(self.gate)), int(sum(self.gate)), kernel_size=3, padding=1, bias=False)
-    
+            if int(sum(self.gate))==0:
+                self.conv3= Identity()
+            else:
+                self.conv3= nn.Conv2d(int(sum(self.gate)), int(sum(self.gate)), kernel_size=3, padding=1, bias=False)
+            
 
     def forward(self, op2, x):
         op2 = prune(op2, self.gate)

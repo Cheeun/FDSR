@@ -1,3 +1,5 @@
+experiment/*
+#src/NAS_exports/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

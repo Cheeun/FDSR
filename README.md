@@ -40,8 +40,8 @@ Train searched architecture
 the searched architecture here is searched on full EDSR with scale 4.
 ```bash
 cd src       # You are now in */FDSR/src
-sh train.sh  # For training FDSR model
-			 # or
+sh train_x2.sh  # For training FDSR_x2 model
+sh train_x4.sh  # For training FDSR_x4 model
 sh test.sh   # For testing pretrained models # in progress
 ```
 ## 4. Settings
