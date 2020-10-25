@@ -11,7 +11,7 @@ parser.add_argument('--template', default='.',
                     help='You can set various templates in option.py')
 
 # Hardware specifications
-parser.add_argument('--n_threads', type=int, default=6,
+parser.add_argument('--n_threads', type=int, default=1,
                     help='number of threads for data loading')
 parser.add_argument('--cpu', action='store_true',
                     help='use cpu only')
@@ -27,7 +27,7 @@ parser.add_argument('--dir_demo', type=str, default='../test',
                     help='demo image directory')
 parser.add_argument('--data_train', type=str, default='DIV2K',
                     help='train dataset name')
-parser.add_argument('--data_test', type=str, default='DIV2K',
+parser.add_argument('--data_test', type=str, default='Set5+Set14+B100+Urban100',
                     help='test dataset name')
 parser.add_argument('--data_range', type=str, default='1-800/801-810',
                     help='train/test data range')
@@ -56,11 +56,11 @@ parser.add_argument('--pre_train', type=str, default='',
                     help='pre-trained model directory')
 parser.add_argument('--extend', type=str, default='.',
                     help='pre-trained model directory')
-parser.add_argument('--n_resblocks', type=int, default=16,
+parser.add_argument('--n_resblocks', type=int, default=32,
                     help='number of residual blocks')
-parser.add_argument('--n_feats', type=int, default=64,
+parser.add_argument('--n_feats', type=int, default=256,
                     help='number of feature maps')
-parser.add_argument('--res_scale', type=float, default=1,
+parser.add_argument('--res_scale', type=float, default=0.1,
                     help='residual scaling')
 parser.add_argument('--shift_mean', default=True,
                     help='subtract pixel mean from the input')
@@ -77,7 +77,7 @@ parser.add_argument('--test_every', type=int, default=1000,
                     help='do test per every N batches')
 parser.add_argument('--epochs', type=int, default=300,
                     help='number of epochs to train')
-parser.add_argument('--batch_size', type=int, default=16,
+parser.add_argument('--batch_size', type=int, default=8,
                     help='input batch size for training')
 parser.add_argument('--split_batch', type=int, default=1,
                     help='split the batch into smaller chunks')
@@ -89,7 +89,7 @@ parser.add_argument('--test_only', action='store_true',
 # Optimization specifications
 parser.add_argument('--lr', type=float, default=1e-4,
                     help='learning rate')
-parser.add_argument('--decay', type=str, default='200',
+parser.add_argument('--decay', type=str, default='150',
                     help='learning rate decay type')
 parser.add_argument('--gamma', type=float, default=0.5,
                     help='learning rate decay factor for step decay')
@@ -128,7 +128,7 @@ parser.add_argument('--save_results', action='store_true',
                     help='save output results')
 parser.add_argument('--save_gt', action='store_true',
                     help='save low-resolution and high-resolution images together')
-parser.add_argument('--searched_model', type=str, default='FDSR_full_x4_50G',
+parser.add_argument('--searched_model', type=str, default='',
                     help='file dir to import from')
 args = parser.parse_args()
 #template.set_template(args)
@@ -145,6 +145,12 @@ for arg in vars(args):
         vars(args)[arg] = True
     elif vars(args)[arg] == 'False':
         vars(args)[arg] = False
+
+if args.test_only:
+    if args.scale[0] == 2:
+        args.pre_train='network_architectures/fdsr_full_x2_3%/model_best.pt'
+    elif args.scale[0] ==4:
+        args.pre_train = 'network_architectures/fdsr_full_x4_3%/model_best.pt'
 
 
 

@@ -10,6 +10,9 @@ from tqdm import tqdm
 import time
 
 import numpy as np
+import glob
+from PIL import Image 
+from torchvision.utils import save_image
 
 class Trainer():
     def __init__(self, args, loader, my_model, my_loss, ckp):
@@ -79,7 +82,7 @@ class Trainer():
         torch.set_grad_enabled(False)
 
         epoch = self.optimizer.get_last_epoch()
-        self.ckp.write_log('\nEvaluation:')
+        self.ckp.write_log('\nEvaluation for ...')
         self.ckp.add_log(
             torch.zeros(1, len(self.loader_test), len(self.scale))
         )
@@ -94,16 +97,16 @@ class Trainer():
             for s in list(p.size()):
                 nn = nn*s
             n_params += nn
+        self.ckp.write_log('FDSR_f_x'+str(self.args.scale[0])+' Model')
         self.ckp.write_log('Parameters: {:.1f}K'.format(n_params/(10**3)))
         
        
         if self.args.save_results:
             self.ckp.begin_background()
+
         ################### Test for Single Image ######################
-        
         time_list= []
         for idx_scale, scale in enumerate(self.scale):
-            
             for i in range(10):
                 lr = torch.randn(1,3,1280//self.args.scale[0], 720//self.args.scale[0]) 
                 hr = torch.randn(1,3,1280,720) # HD image
@@ -125,36 +128,24 @@ class Trainer():
             self.ckp.write_log('Per 1 HD image (1280x720):')
             self.ckp.write_log('Average operation time: {:.3f}s'.format(np.mean(np.array(time_list))))
 
-            _output = (1280,720)
-            _input= (_output[0]//self.args.scale[0],_output[1]//self.args.scale[0])
+        ################### Test for Custom Image ######################
+        if self.args.test_only:
+            self.ckp.write_log('\nTest on Custom Images...')
+            for filename in glob.glob('images/*.png'):
+                image = Image.open(filename)
+                pix = np.array(image)
+                lr = torch.Tensor(pix).permute(2,0,1).unsqueeze(0)
 
-            kernel_size = 3
-            flops= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*self.args.n_colors*len(self.args.op1)
-            # flops= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*self.args.n_colors*(self.args.n_feats)
+                ##### Input, Output Size #####
+                print('Input Image Size:  {} x {}'.format(lr.size(2),lr.size(3)))
+                print('Output Image Size: {} x {}'.format(lr.size(2)*self.args.scale[0],lr.size(3)*self.args.scale[0]))
+                ##### Get SR #######
+                sr = self.model(lr,0)
+                sr = sr.clamp(0, 255).round().div(255)
+                save_image(sr[0], filename[:-4]+'_SR_'+str(self.args.scale[0])+'.png')
 
-            ch_length=0
-            for i in range (self.args.n_resblocks):
-                # ch_length += 64 # for backbone
-                ch_length += len(self.args.P[i])+len(self.args.R[i])+len(self.args.T[i])+len(self.args.PR[i])+len(self.args.PT[i])+len(self.args.RT[i])+len(self.args.PRT[i])
-            
-            # Resblocks
-            flops+= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*self.args.n_feats*2*(ch_length)
-            # flops+= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*self.args.n_feats*self.args.n_feats*2*self.args.n_resblocks # baseline
-
-            # Global Skip
-            flops+= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*self.args.n_feats*len(self.args.op2)
-            # flops+= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*self.args.n_feats*self.args.n_feats # baseline
-
-            # Tail
-            flops+= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*len(self.args.op_last)*self.args.n_colors*(4**(self.args.scale[0]//2))
-            # flops+= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*(self.args.n_feats)*self.args.n_colors*(4**(self.args.scale[0]//2))
-            # if there is tail conv, instead of above,
-            # flops+= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*self.args.n_feats*self.args.n_feats*4*(self.args.scale[0]//2) # do conv twice if scale is 4
-            # flops+= (_input[0]*_input[1])*2*(kernel_size*kernel_size)*self.args.n_feats*self.args.n_colors
-
-            self.ckp.write_log('FLOPs: {:.1f}G'.format(flops/(10**9)))
-            
-        
+        ################### Test for Benchmark dataset ######################
+        self.ckp.write_log('\nTest on Benchmark Dataset...')
         for idx_data, d in enumerate(self.loader_test):
             for idx_scale, scale in enumerate(self.scale):
 

@@ -348,7 +348,7 @@ def main():
     idx_scale =0
 
     lr_list =[]
-    for filename in glob.glob('*.png'):
+    for filename in glob.glob('images/*.png'):
         image = Image.open(filename)
         pix = np.array(image)
         lr = torch.Tensor(pix).permute(2,0,1).unsqueeze(0)
@@ -394,7 +394,7 @@ def main():
         sr = model(lr)
         sr = sr.clamp(0, 255).round().div(255)
 
-        save_image(sr[0], filename[:-4]+'_SR.png')
+        save_image(sr[0], filename[:-4]+'_SR_'+str(args.scale)+'.png')
 
 
     torch.set_grad_enabled(True) 
