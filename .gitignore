@@ -1,6 +1,9 @@
-experiment/*
+#experiment/*
 #src/NAS_exports/
 # Byte-compiled / optimized / DLL files
+#src/
+#experiment/
+
 __pycache__/
 *.py[cod]
 *$py.class
@@ -60,7 +63,7 @@ docs/_build/
 target/
 
 # PyTorch
-*.pt
+#*.pt
 *.pdf
 *.png
 *.txt
