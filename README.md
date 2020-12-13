@@ -59,9 +59,10 @@ Place the dataset as in #2
 ## 5. Results
 Further compressed architectures to be done.
 
-| Name | Baseline | Training FLOPs | Pruned-ratio | Parameters[K] | Set5 | Set14 | B100 | Urban100 |
-|  ---  |  ---  | ---       | ---        | ---  |  ---  |  ---  |  ---  |  ---  |
-| **baseline FDSR** | full EDSR x4 | 180G | 100% | 38,473 | 32.14 | 28.57 | 27.56 | 25.99 |
-%| **25% FDSR** | full EDSR x4 | 50G | 25% | 9,296 | 32.11 | 28.55 | 27.55 | 25.95 |
-| **3% FDSR** | full EDSR x4 | 6G | 3.3% | 1,245 | 32.07 | 28.53 | 27.53 | 25.91 |
-| **3% FDSR** | full EDSR x2 | 23G | 3.3% | 1,206 | 37.27 | 32.87 | 31.64 | 30.32 |
+| Name | Baseline | Training FLOPs | Pruned-ratio | Parameters[K] | Set5 | Set14 | B100 | Urban100 | Inference time* |
+|  ---  |  ---  | ---       | ---        | ---  |  ---  |  ---  |  ---  |  ---  | --- |
+| **baseline FDSR** | full EDSR x4 | 180G | 100% | 38,473 | 32.14 | 28.57 | 27.56 | 25.99 | 35.0 |
+| **3% FDSR** | full EDSR x4 | 6G | 3.3% | 1,245 | 32.07 | 28.53 | 27.53 | 25.91 | 0.07 |
+| **3% FDSR** | full EDSR x2 | 23G | 3.3% | 1,206 | 37.27 | 32.87 | 31.64 | 30.32 | 0.23 |
+
+Inference time(sec)* is calculated for a single full HD image (1920x1080)
